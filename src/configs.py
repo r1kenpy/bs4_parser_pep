@@ -11,20 +11,23 @@ from constants import (
 
 from logging.handlers import RotatingFileHandler
 
+DOCUMENTATION_PARSER = 'Парсер документации Python'
+PARSER_MODES = 'Режимы работы парсера'
+CLEAR_CACHE = 'Очистка кеша'
+ADDITIONAL_DATA_OUTPUT_METHODS = 'Дополнительные способы вывода данных'
+
 
 def configure_argument_parser(available_modes):
-    parser = argparse.ArgumentParser(description='Парсер документации Python')
+    parser = argparse.ArgumentParser(description=DOCUMENTATION_PARSER)
+    parser.add_argument('mode', choices=available_modes, help=PARSER_MODES)
     parser.add_argument(
-        'mode', choices=available_modes, help='Режимы работы парсера'
-    )
-    parser.add_argument(
-        '-c', '--clear-cache', action='store_true', help='Очистка кеша'
+        '-c', '--clear-cache', action='store_true', help=CLEAR_CACHE
     )
     parser.add_argument(
         '-o',
         '--output',
         choices=(OUTPUT_PRETTY, OUTPUT_FILE),
-        help='Дополнительные способы вывода данных',
+        help=ADDITIONAL_DATA_OUTPUT_METHODS,
     )
     return parser
 
