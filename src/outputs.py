@@ -1,14 +1,11 @@
-from prettytable import PrettyTable
-from constants import (
-    DATETIME_FORMAT,
-    OUTPUT_FILE,
-    OUTPUT_PRETTY,
-    BASE_DIR,
-    FOLDER_RESULTS,
-)
-import datetime as dt
 import csv
+import datetime as dt
 import logging
+
+from prettytable import PrettyTable
+
+from constants import (BASE_DIR, DATETIME_FORMAT, FOLDER_RESULTS, OUTPUT_FILE,
+                       OUTPUT_PRETTY)
 
 FILE_SAVE_LOG = 'Файл с результатами был сохранён: {file_path}'
 

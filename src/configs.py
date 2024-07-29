@@ -1,15 +1,9 @@
 import argparse
 import logging
-from constants import (
-    DT_FORMAT,
-    LOG_FORMAT,
-    OUTPUT_PRETTY,
-    OUTPUT_FILE,
-    LOG_FILE,
-    LOG_DIR,
-)
-
 from logging.handlers import RotatingFileHandler
+
+from constants import (DT_FORMAT, LOG_DIR, LOG_FILE, LOG_FORMAT, OUTPUT_FILE,
+                       OUTPUT_PRETTY)
 
 DOCUMENTATION_PARSER = 'Парсер документации Python'
 PARSER_MODES = 'Режимы работы парсера'
