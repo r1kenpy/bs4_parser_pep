@@ -4,12 +4,17 @@ from collections import defaultdict
 from urllib.parse import urljoin
 
 import requests_cache
-from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from configs import configure_argument_parser, configure_logging
-from constants import (BASE_DIR, DOWNLOADS_URL, EXPECTED_STATUS, MAIN_DOC_URL,
-                       PEP_URL, WHATS_NEW_URL)
+from constants import (
+    BASE_DIR,
+    DOWNLOADS_URL,
+    EXPECTED_STATUS,
+    MAIN_DOC_URL,
+    PEP_URL,
+    WHATS_NEW_URL,
+)
 from outputs import control_output
 from utils import find_tag, get_response, get_soup
 
@@ -29,29 +34,25 @@ LOGGING_COMMAND_LINE_ARGUMENTS = 'Аргументы командной стро
 
 
 def whats_new(session):
-
     soup = get_soup(session, WHATS_NEW_URL)
-    main_div = soup.select_one('#what-s-new-in-python div.toctree-wrapper')
-    sections_by_python = main_div.select('li.toctree-l1')
+    a_tags = soup.select(
+        '#what-s-new-in-python div.toctree-wrapper li.toctree-l1 a'
+    )
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, автор')]
-    for section in tqdm(sections_by_python):
-        version_link = urljoin(
-            WHATS_NEW_URL,
-            find_tag(section, 'a')['href'],
-        )
-        session = requests_cache.CachedSession()
-        response = get_response(session, version_link)
-        if response is None:
-            continue
-        soup = BeautifulSoup(response.text, 'lxml')
-        results.append(
-            (
-                version_link,
-                find_tag(soup, 'h1').text,
-                find_tag(soup, 'dl').text.replace('\n', ' '),
+    for a_tag in tqdm(a_tags):
+        if re.match(r'.+\d\.html$', a_tag.get('href')):
+            version_link = urljoin(
+                WHATS_NEW_URL,
+                a_tag['href'],
             )
-        )
-
+            soup = get_soup(session, version_link)
+            results.append(
+                (
+                    version_link,
+                    find_tag(soup, 'h1').text,
+                    find_tag(soup, 'dl').text.replace('\n', ' '),
+                )
+            )
     return results
 
 
@@ -59,12 +60,11 @@ def latest_versions(session):
     soup = get_soup(session, MAIN_DOC_URL)
     sidebar = find_tag(soup, 'div', {'class': 'sphinxsidebarwrapper'})
     ul_tags = sidebar.find_all('ul')
-    for ul in ul_tags:
-        if 'All versions' in ul.text:
-            a_tags = ul.find_all('a')
-            break
-        else:
-            raise KeyError(EXCEPTION_NOTHING_FOUND)
+    ul = ul_tags[0]
+    if 'All versions' in ul.text:
+        a_tags = ul.find_all('a')
+    else:
+        raise ValueError(EXCEPTION_NOTHING_FOUND)
     results = [('Ссылка на документацию', 'Версия', 'Статус')]
     for a_tag in a_tags:
         text_match = re.match(
@@ -112,8 +112,7 @@ def pep(session):
     for result in tqdm(results_link):
         expected_status = EXPECTED_STATUS[result[0]]
         url_pep = result[1]
-        response = get_response(session, url_pep)
-        soup = BeautifulSoup(response.text, 'lxml')
+        soup = get_soup(session, url_pep)
         status_on_page_pep = (
             soup.find(string='Status').find_parent().find_next_sibling().text
         )
@@ -134,11 +133,11 @@ def pep(session):
                 with_different_statuses=with_different_statuses
             )
         )
-    result = [('Статус', 'Количество')]
-    for status, amount in quantity_peps_in_each_status.items():
-        result.append((status, amount))
-    result.append(('Total', sum(quantity_peps_in_each_status.values())))
-    return result
+    return [
+        ('Статус', 'Количество'),
+        *quantity_peps_in_each_status.items(),
+        ('Total', sum(quantity_peps_in_each_status.values())),
+    ]
 
 
 MODE_TO_FUNCTION = {
