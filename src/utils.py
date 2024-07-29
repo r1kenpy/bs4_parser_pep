@@ -37,12 +37,3 @@ def find_tag(soup, tag, attrs=None):
             ERROR_MESSAGE.format(tag=tag, attrs=attrs)
         )
     return searched_tag
-
-
-def find_all_tags(soup, tag, attrs=None):
-    searched_tags = soup.find_all(tag, attrs=(attrs or {}))
-    if not searched_tags:
-        raise ParserFindTagException(
-            ERROR_MESSAGE.format(tag=tag, attrs=attrs)
-        )
-    return searched_tags

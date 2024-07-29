@@ -1,12 +1,8 @@
-import inspect
-
 from prettytable import PrettyTable
 from constants import (
     DATETIME_FORMAT,
     OUTPUT_FILE,
     OUTPUT_PRETTY,
-    RESULTS_DIR,
-    FILE_PATH,
     BASE_DIR,
 )
 import datetime as dt
