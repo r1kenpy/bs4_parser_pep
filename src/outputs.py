@@ -4,6 +4,7 @@ from constants import (
     OUTPUT_FILE,
     OUTPUT_PRETTY,
     BASE_DIR,
+    FOLDER_RESULTS,
 )
 import datetime as dt
 import csv
@@ -13,20 +14,20 @@ FILE_SAVE_LOG = 'Файл с результатами был сохранён: {
 
 
 def file_output(results, cli_args):
-    results_dir = BASE_DIR / 'results'
+    results_dir = BASE_DIR / FOLDER_RESULTS
     results_dir.mkdir(exist_ok=True)
     parser_mode = cli_args.mode
-    now = dt.datetime.now()
-    now_formatted = now.strftime(DATETIME_FORMAT)
-    file_path = results_dir / f'{parser_mode}_{now_formatted}.csv'
+    file_path = (
+        results_dir
+        / f'{parser_mode}_{dt.datetime.now().strftime(DATETIME_FORMAT)}.csv'
+    )
 
     with open(
         file_path,
         'w',
         encoding='utf-8',
     ) as csvfile:
-        writer = csv.writer(csvfile, dialect=csv.unix_dialect)
-        writer.writerows(results)
+        csv.writer(csvfile, dialect=csv.unix_dialect).writerows(results)
     logging.info(FILE_SAVE_LOG.format(file_path=file_path))
 
 
@@ -43,7 +44,7 @@ def pretty_output(results, cli_args):
     print(table)
 
 
-OUTPUT_OPTIONS = {
+METHODS_OUTPUTS = {
     OUTPUT_PRETTY: pretty_output,
     OUTPUT_FILE: file_output,
     None: default_output,
@@ -51,4 +52,4 @@ OUTPUT_OPTIONS = {
 
 
 def control_output(results, cli_args):
-    return OUTPUT_OPTIONS[cli_args.output](results, cli_args)
+    return METHODS_OUTPUTS[cli_args.output](results, cli_args)

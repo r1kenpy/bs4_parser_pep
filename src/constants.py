@@ -10,6 +10,7 @@ DATETIME_FORMAT = '%Y-%m-%d_%H-%M-%S'
 BASE_DIR = Path(__file__).parent
 LOG_DIR = BASE_DIR / 'logs'
 LOG_FILE = LOG_DIR / 'parser.log'
+FOLDER_RESULTS = 'results'
 
 DOWNLOADS_URL = urljoin(MAIN_DOC_URL, 'download.html')
 WHATS_NEW_URL = urljoin(MAIN_DOC_URL, 'whatsnew/')
@@ -29,5 +30,3 @@ EXPECTED_STATUS = {
 
 OUTPUT_PRETTY = 'pretty'
 OUTPUT_FILE = 'file'
-
-UTF_8 = 'utf-8'

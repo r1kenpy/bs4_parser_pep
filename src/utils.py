@@ -1,11 +1,10 @@
+import requests
 from bs4 import BeautifulSoup
 from requests import RequestException
 
 from exceptions import ParserFindTagException
-from constants import UTF_8
-import requests
 
-TEXT_EXCEPTION = 'Возникла ошибка при загрузке страницы {url}'
+TEXT_EXCEPTION = 'Возникла ошибка при загрузке страницы {url} {e}'
 ERROR_MESSAGE = 'Не найден тег {tag} {attrs}'
 
 res = requests.get(
@@ -13,21 +12,17 @@ res = requests.get(
 )
 
 
-def get_response(session, url, utf_8=UTF_8):
+def get_response(session, url, encoding='utf-8'):
     try:
         response = session.get(url)
-        response.encoding = utf_8
+        response.encoding = encoding
         return response
-    except RequestException:
-        raise RequestException(TEXT_EXCEPTION.format(url=url))
+    except RequestException as e:
+        raise ValueError(TEXT_EXCEPTION.format(url=url, e=e))
 
 
-def get_soup(session, url):
-    response = get_response(session, url)
-    if response is None:
-        return
-    soup = BeautifulSoup(response.text, 'lxml')
-    return soup
+def get_soup(session, url, parser='lxml'):
+    return BeautifulSoup(get_response(session, url).text, parser)
 
 
 def find_tag(soup, tag, attrs=None):
