@@ -39,14 +39,27 @@ LOGGING_COMMAND_LINE_ARGUMENTS = 'Аргументы командной стро
 def whats_new(session):
 
     soup = get_soup(session, WHATS_NEW_URL)
-    main_div = find_tag(soup, 'section', attrs={'id': 'what-s-new-in-python'})
-    div_with_ul = find_tag(main_div, 'div', attrs={'class': 'toctree-wrapper'})
-    sections_by_python = div_with_ul.find_all(
-        'li', attrs={'class': 'toctree-l1'}
+    soup1 = get_soup(session, WHATS_NEW_URL)
+    sections_by_python = soup1.select(
+        '#what-s-new-in-python div.toctree-wrapper li.toctree-l1'
     )
+    # dd = soup1.select(
+    #     '#what-s-new-in-python div.toctree-wrapper li.toctree-l1'
+    # )
+
+    # main_div = find_tag(soup, 'section', attrs={'id': 'what-s-new-in-python'})
+    # div_with_ul = find_tag(main_div, 'div', attrs={'class': 'toctree-wrapper'})
+    # sections_by_python = div_with_ul.find_all(
+    #     'li', attrs={'class': 'toctree-l1'}
+    # )
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, автор')]
     for section in tqdm(sections_by_python):
-        version_link = urljoin(WHATS_NEW_URL, find_tag(section, 'a')['href'])
+        version_link = urljoin(
+            WHATS_NEW_URL,
+            find_tag(
+                section, 'a', attrs={'href': re.compile(r'\d\.\d+\.html')}
+            )['href'],
+        )
         session = requests_cache.CachedSession()
         response = get_response(session, version_link)
         if response is None:
@@ -68,7 +81,7 @@ def latest_versions(session):
     sidebar = find_tag(soup, 'div', {'class': 'sphinxsidebarwrapper'})
     ul_tags = sidebar.find_all('ul')
     for ul in ul_tags:
-        if 'All versionds' in ul.text:
+        if 'All versions' in ul.text:
             a_tags = ul.find_all('a')
             break
         else:
@@ -98,7 +111,7 @@ def download(session):
     download_dir = BASE_DIR / 'downloads'
     download_dir.mkdir(exist_ok=True)
     archive_path = download_dir / filename
-    response = session.get(archive_url)
+    response = get_response(session, archive_url)
     with open(archive_path, 'wb') as f:
         f.write(response.content)
     logging.info(LOGGING_DOWNLOAD_SUCCES.format(archive_path=archive_path))
@@ -122,7 +135,7 @@ def pep(session):
     for result in tqdm(results_link):
         expected_status = EXPECTED_STATUS[result[0]]
         url_pep = result[1]
-        response = session.get(url_pep)
+        response = get_response(session, url_pep)
         soup = BeautifulSoup(response.text, 'lxml')
         status_on_page_pep = (
             soup.find(string='Status').find_parent().find_next_sibling().text

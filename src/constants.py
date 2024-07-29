@@ -10,8 +10,6 @@ DATETIME_FORMAT = '%Y-%m-%d_%H-%M-%S'
 BASE_DIR = Path(__file__).parent
 LOG_DIR = BASE_DIR / 'logs'
 LOG_FILE = LOG_DIR / 'parser.log'
-RESULTS_DIR = BASE_DIR / 'results'
-FILE_PATH = RESULTS_DIR / '{parser_mode}_{now_formatted}.csv'
 
 DOWNLOADS_URL = urljoin(MAIN_DOC_URL, 'download.html')
 WHATS_NEW_URL = urljoin(MAIN_DOC_URL, 'whatsnew/')
