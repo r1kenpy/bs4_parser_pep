@@ -14,6 +14,7 @@ from constants import (
     MAIN_DOC_URL,
     PEP_URL,
     WHATS_NEW_URL,
+    FOLDER_DOWNLOADS,
 )
 from outputs import control_output
 from utils import find_tag, get_response, get_soup
@@ -25,6 +26,7 @@ LOGGING_DOWNLOAD_SUCCES = 'Архив был загружен и сохранё�
 LOGGING_MESSAGE_DIFFERENT_STATUSES = (
     'Несовпадающие статусы: {with_different_statuses}'
 )
+LOGGING_GET_SOUP = 'При обработки ссылки возникли ошибки: {errors}'
 TEXT_WITH_DIFFERENT_STATUSES = (
     'Pep: [{url_pep}];'
     'Статус в карточке: {status_on_page_pep};'
@@ -34,25 +36,31 @@ LOGGING_COMMAND_LINE_ARGUMENTS = 'Аргументы командной стро
 
 
 def whats_new(session):
-    soup = get_soup(session, WHATS_NEW_URL)
-    a_tags = soup.select(
-        '#what-s-new-in-python div.toctree-wrapper li.toctree-l1 a'
-    )
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, автор')]
-    for a_tag in tqdm(a_tags):
+    link_with_errors = []
+    for a_tag in tqdm(
+        get_soup(session, WHATS_NEW_URL).select(
+            '#what-s-new-in-python div.toctree-wrapper li.toctree-l1 a'
+        )
+    ):
         if re.match(r'.+\d\.html$', a_tag.get('href')):
-            version_link = urljoin(
+            version_link = '111' + urljoin(
                 WHATS_NEW_URL,
                 a_tag['href'],
             )
-            soup = get_soup(session, version_link)
-            results.append(
-                (
-                    version_link,
-                    find_tag(soup, 'h1').text,
-                    find_tag(soup, 'dl').text.replace('\n', ' '),
+            try:
+                soup = get_soup(session, version_link)
+                results.append(
+                    (
+                        version_link,
+                        find_tag(soup, 'h1').text,
+                        find_tag(soup, 'dl').text.replace('\n', ' '),
+                    )
                 )
-            )
+            except Exception as e:
+                link_with_errors.append((version_link, e))
+
+    logging.error(LOGGING_GET_SOUP.format(errors=link_with_errors))
     return results
 
 
@@ -64,7 +72,7 @@ def latest_versions(session):
     if 'All versions' in ul.text:
         a_tags = ul.find_all('a')
     else:
-        raise ValueError(EXCEPTION_NOTHING_FOUND)
+        raise NameError(EXCEPTION_NOTHING_FOUND)
     results = [('Ссылка на документацию', 'Версия', 'Статус')]
     for a_tag in a_tags:
         text_match = re.match(
@@ -87,7 +95,7 @@ def download(session):
     )
     archive_url = urljoin(DOWNLOADS_URL, pdf_a4_tag['href'])
     filename = archive_url.split('/')[-1]
-    download_dir = BASE_DIR / 'downloads'
+    download_dir = BASE_DIR / FOLDER_DOWNLOADS
     download_dir.mkdir(exist_ok=True)
     archive_path = download_dir / filename
     response = get_response(session, archive_url)
@@ -100,6 +108,7 @@ def pep(session):
     soup = get_soup(session, PEP_URL)
     tr_tags = soup.select('#numerical-index tbody tr')
     results_link = []
+    link_with_errors = []
     for row in tqdm(tr_tags):
         results_link.append(
             (
@@ -112,7 +121,10 @@ def pep(session):
     for result in tqdm(results_link):
         expected_status = EXPECTED_STATUS[result[0]]
         url_pep = result[1]
-        soup = get_soup(session, url_pep)
+        try:
+            soup = get_soup(session, url_pep)
+        except Exception as e:
+            link_with_errors.append((url_pep, e))
         status_on_page_pep = (
             soup.find(string='Status').find_parent().find_next_sibling().text
         )
@@ -126,6 +138,7 @@ def pep(session):
             )
 
         quantity_peps_in_each_status[status_on_page_pep] += 1
+    logging.error(LOGGING_GET_SOUP.format(errors=link_with_errors))
 
     if with_different_statuses:
         logging.info(
@@ -136,7 +149,7 @@ def pep(session):
     return [
         ('Статус', 'Количество'),
         *quantity_peps_in_each_status.items(),
-        ('Total', sum(quantity_peps_in_each_status.values())),
+        ('Всего', sum(quantity_peps_in_each_status.values())),
     ]
 
 

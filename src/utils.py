@@ -7,10 +7,6 @@ from exceptions import ParserFindTagException
 TEXT_EXCEPTION = 'Возникла ошибка при загрузке страницы {url} {e}'
 ERROR_MESSAGE = 'Не найден тег {tag} {attrs}'
 
-res = requests.get(
-    'https://en.wikipedia.org/wiki/List_of_pages',
-)
-
 
 def get_response(session, url, encoding='utf-8'):
     try:
@@ -18,7 +14,7 @@ def get_response(session, url, encoding='utf-8'):
         response.encoding = encoding
         return response
     except RequestException as e:
-        raise ValueError(TEXT_EXCEPTION.format(url=url, e=e))
+        raise ConnectionError(TEXT_EXCEPTION.format(url=url, e=e))
 
 
 def get_soup(session, url, parser='lxml'):

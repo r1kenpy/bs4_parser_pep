@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).parent
 LOG_DIR = BASE_DIR / 'logs'
 LOG_FILE = LOG_DIR / 'parser.log'
 FOLDER_RESULTS = 'results'
-
+FOLDER_DOWNLOADS = 'downloads'
 DOWNLOADS_URL = urljoin(MAIN_DOC_URL, 'download.html')
 WHATS_NEW_URL = urljoin(MAIN_DOC_URL, 'whatsnew/')
 
