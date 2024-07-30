@@ -44,7 +44,7 @@ def whats_new(session):
         )
     ):
         if re.match(r'.+\d\.html$', a_tag.get('href')):
-            version_link = '111' + urljoin(
+            version_link = urljoin(
                 WHATS_NEW_URL,
                 a_tag['href'],
             )
@@ -57,10 +57,10 @@ def whats_new(session):
                         find_tag(soup, 'dl').text.replace('\n', ' '),
                     )
                 )
-            except Exception as e:
-                link_with_errors.append((version_link, e))
+            except ConnectionError as e:
+                link_with_errors.append(e)
 
-    logging.error(LOGGING_GET_SOUP.format(errors=link_with_errors))
+    list(map(logging.error, link_with_errors))
     return results
 
 
@@ -72,7 +72,7 @@ def latest_versions(session):
     if 'All versions' in ul.text:
         a_tags = ul.find_all('a')
     else:
-        raise NameError(EXCEPTION_NOTHING_FOUND)
+        raise AttributeError(EXCEPTION_NOTHING_FOUND)
     results = [('Ссылка на документацию', 'Версия', 'Статус')]
     for a_tag in a_tags:
         text_match = re.match(
@@ -123,22 +123,25 @@ def pep(session):
         url_pep = result[1]
         try:
             soup = get_soup(session, url_pep)
-        except Exception as e:
-            link_with_errors.append((url_pep, e))
-        status_on_page_pep = (
-            soup.find(string='Status').find_parent().find_next_sibling().text
-        )
-        if status_on_page_pep not in expected_status:
-            with_different_statuses.append(
-                TEXT_WITH_DIFFERENT_STATUSES.format(
-                    url_pep=url_pep,
-                    status_on_page_pep=status_on_page_pep,
-                    expected_status=list(expected_status),
-                )
+            status_on_page_pep = (
+                soup.find(string='Status')
+                .find_parent()
+                .find_next_sibling()
+                .text
             )
+            if status_on_page_pep not in expected_status:
+                with_different_statuses.append(
+                    TEXT_WITH_DIFFERENT_STATUSES.format(
+                        url_pep=url_pep,
+                        status_on_page_pep=status_on_page_pep,
+                        expected_status=list(expected_status),
+                    )
+                )
+                quantity_peps_in_each_status[status_on_page_pep] += 1
+        except ConnectionError as e:
+            link_with_errors.append(e)
 
-        quantity_peps_in_each_status[status_on_page_pep] += 1
-    logging.error(LOGGING_GET_SOUP.format(errors=link_with_errors))
+    list(map(logging.error, link_with_errors))
 
     if with_different_statuses:
         logging.info(
